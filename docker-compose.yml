@@ -1,0 +1,59 @@
+version: '2'
+
+services:
+  proxy:
+    image: jwilder/nginx-proxy
+    container_name: gudfites_nginx-proxy
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/vhost.d
+      - /usr/share/nginx/html
+      - ./volumes/ssl:/etc/nginx/certs:ro
+
+  ssl-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: gudfites_nginx_ssl-companion
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./volumes/ssl:/etc/nginx/certs:rw
+    volumes_from:
+      - proxy
+    depends_on:
+      - proxy
+
+  # --------------------------------------------------------------------------
+
+  web:
+    container_name: gudfites_web
+    build: ./apps/web
+    environment:
+      - VIRTUAL_NETWORK=proxy
+      - VIRTUAL_HOST=YOUR DOMAIN # change to ngrok for local
+      - VIRTUAL_PORT=8080
+      - LETSENCRYPT_HOST=YOUR DOMAIN # change to ngrok for local
+      - LETSENCRYPT_EMAIL=YOUR EMAIL
+    links:
+      - db:database
+    expose:
+      - "8080"
+
+  consumer:
+    container_name: gudefites_consumer
+    build: ./apps/consumer
+    links:
+      - db:database
+
+  db:
+    image: mongo
+    container_name: gudfites_mongo
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./volumes/mongo:/data/db
+    command: mongod --smallfiles --logpath=/dev/null

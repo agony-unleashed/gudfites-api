@@ -1,0 +1,7 @@
+volumes/mongo
+volumes/ssl
+node_modules
+.DS_Store
+.DS_Store*
+.tern-port
+*.pem
