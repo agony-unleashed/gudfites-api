@@ -31,8 +31,16 @@ function showButton () {
       .then(status)
       .then(res => res.json())
       .then(render)
-      .catch(console.error)
+      .catch(unauthorized)
   })
+}
+
+function unauthorized (err) {
+  if (err.message === 'Unauthorized') {
+    window.localStorage.removeItem('accessToken')
+  }
+
+  showLogin()
 }
 
 function showLogin () {

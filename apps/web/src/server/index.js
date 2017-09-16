@@ -3,8 +3,10 @@
 
 // vendor
 const Koa = require('koa')
+const fs = require('fs')
 const jwt = require('koa-jwt')
 const morgan = require('koa-morgan')
+const promisify = require('util').promisify
 const serve = require('koa-static')
 
 // lib
@@ -16,6 +18,8 @@ const soloRoutes = require('./routes/v1/solo')
 // setup
 // ---------------------------------------------------------------------------
 
+const read = promisify(fs.readFile)
+
 const app = new Koa()
 const PORT = process.env.VIRTUAL_PORT || 1337
 
@@ -24,15 +28,12 @@ app.use(morgan('dev'))
 // jwt
 // ---------------------------------------------------------------------------
 
-// @TODO: Generate a keypair with Docker
-// $ openssl genrsa -out demo.rsa 1024
-// $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
-// const publicKey = fs.readFileSync('demo.rsa.pub');
-// const privateKey = fs.readFileSync('demo.rsa');
-// const sekrit = jwt({ secret: publicKey, algorithm: 'RS256' })
+const CERT_PATH = process.env.GUDFITES_JWT || '../../volumes/pw'
+const publicKey = fs.readFileSync(`${CERT_PATH}/gudfites.rsa.pub`)
 
 // public
 // ---------------------------------------------------------------------------
+
 
 app.use(serve(`${__dirname}/public`))
 app.use(loginRoutes.routes())
@@ -40,7 +41,7 @@ app.use(loginRoutes.routes())
 // protected
 // ---------------------------------------------------------------------------
 
-app.use(jwt({ secret: '_stopsucking_' }))
+app.use(jwt({ secret: publicKey, algorithm: 'RS256' }))
 
 app.use(soloRoutes.routes())
 app.use(ganksRoutes.routes())

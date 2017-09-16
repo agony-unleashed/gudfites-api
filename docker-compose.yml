@@ -3,6 +3,7 @@ version: '2'
 services:
   proxy:
     image: jwilder/nginx-proxy
+    restart: unless-stopped
     container_name: gudfites_nginx-proxy
     labels:
       - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
@@ -17,6 +18,7 @@ services:
 
   ssl-companion:
     image: jrcs/letsencrypt-nginx-proxy-companion
+    restart: unless-stopped
     container_name: gudfites_nginx_ssl-companion
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -27,33 +29,52 @@ services:
       - proxy
 
   # --------------------------------------------------------------------------
+  
+  pw:
+    build: ./apps/pw
+    restart: unless-stopped
+    container_name: gudfites_pw
+    volumes:
+      - ./volumes/pw:/etc/ssl/certs:rw
 
   web:
     container_name: gudfites_web
+    restart: unless-stopped
     build: ./apps/web
+    volumes:
+      - ./volumes/pw:/etc/ssl/certs:ro
     environment:
+      - GUDFITES_JWT=/etc/ssl/certs/
+      - GUDFITES_PW= # login password
+      - LETSENCRYPT_EMAIL= # email
+      - LETSENCRYPT_HOST= # host 
+      - VIRTUAL_HOST= # host
       - VIRTUAL_NETWORK=proxy
-      - VIRTUAL_HOST=YOUR DOMAIN # change to ngrok for local
       - VIRTUAL_PORT=8080
-      - LETSENCRYPT_HOST=YOUR DOMAIN # change to ngrok for local
-      - LETSENCRYPT_EMAIL=YOUR EMAIL
     links:
       - db:database
     expose:
       - "8080"
+    depends_on:
+      - pw
 
   consumer:
+    restart: unless-stopped
     container_name: gudefites_consumer
     build: ./apps/consumer
     links:
       - db:database
 
   db:
+    restart: unless-stopped
     image: mongo
     container_name: gudfites_mongo
+    ports:
+      - '27017:27017'
     environment:
       - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/null
+      - MONGO_LOG_DIR=/dev/mongo_log
     volumes:
       - ./volumes/mongo:/data/db
+      - ./volumes/mongo_log:/data/log
     command: mongod --smallfiles --logpath=/dev/null
