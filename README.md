@@ -9,7 +9,7 @@ containers with `$ docker-compose down -v`, and then `$ rm -rf volumes/mongo`.
 
 # Run:
 
-`$ docker-compose up --build`
+`$ docker-compose up`
 
 # Additional documentation
 
@@ -23,3 +23,5 @@ containers with `$ docker-compose down -v`, and then `$ rm -rf volumes/mongo`.
 - [ ] Use a legit cert for jwt signing - will also need to do some Docker env stuff
 - [ ] discord chatbot for quick queries
 - [ ] many more endpoints
+- [ ] uh... can't run compose with `-d`...
+- [ ] mongo keeps going into lunatic state

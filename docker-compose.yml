@@ -32,7 +32,6 @@ services:
   
   pw:
     build: ./apps/pw
-    restart: unless-stopped
     container_name: gudfites_pw
     volumes:
       - ./volumes/pw:/etc/ssl/certs:rw
