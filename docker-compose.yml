@@ -1,5 +1,9 @@
 version: '2'
 
+volumes:
+  mongodb_data:
+    driver: local
+
 services:
   proxy:
     image: jwilder/nginx-proxy
@@ -44,10 +48,10 @@ services:
       - ./volumes/pw:/etc/ssl/certs:ro
     environment:
       - GUDFITES_JWT=/etc/ssl/certs/
-      - GUDFITES_PW= # login password
-      - LETSENCRYPT_EMAIL= # email
-      - LETSENCRYPT_HOST= # host 
-      - VIRTUAL_HOST= # host
+      - GUDFITES_PW=
+      - LETSENCRYPT_EMAIL=
+      - LETSENCRYPT_HOST=
+      - VIRTUAL_HOST=
       - VIRTUAL_NETWORK=proxy
       - VIRTUAL_PORT=8080
     links:
@@ -65,15 +69,12 @@ services:
       - db:database
 
   db:
-    restart: unless-stopped
-    image: mongo
+    image: 'bitnami/mongodb:latest'
     container_name: gudfites_mongo
+    restart: unless-stopped
+    labels:
+      kompose.service.type: nodeport
     ports:
       - '27017:27017'
-    environment:
-      - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/mongo_log
     volumes:
-      - ./volumes/mongo:/data/db
-      - ./volumes/mongo_log:/data/log
-    command: mongod --smallfiles --logpath=/dev/null
+      - 'mongodb_data:/bitnami'
