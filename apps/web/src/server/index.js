@@ -3,6 +3,7 @@
 
 // vendor
 const Koa = require('koa')
+const cors = require('kcors')
 const fs = require('fs')
 const jwt = require('koa-jwt')
 const morgan = require('koa-morgan')
@@ -24,6 +25,7 @@ const app = new Koa()
 const PORT = process.env.VIRTUAL_PORT || 1337
 
 app.use(morgan('dev'))
+app.use(cors())
 
 // jwt
 // ---------------------------------------------------------------------------
