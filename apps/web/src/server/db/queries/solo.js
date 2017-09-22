@@ -1,13 +1,12 @@
-const MongoClient = require('mongodb').MongoClient
 const R = require('ramda')
 const co = require('co')
 const moment = require('moment')
 
 // ---------------------------------------------------------------------------
 
-const DB_URL = process.env.KBDUMP_LOCAL
-  ? 'mongodb://localhost:27017/zkill'
-  : 'mongodb://database:27017/zkill'
+const connection = require('../connection.js')
+
+// ---------------------------------------------------------------------------
 
 const addZone = ({ zone }) => doc => zone
   ? Object.assign({}, { 'kbdump.zone': zone }, doc)
@@ -35,8 +34,6 @@ const addAttackerCount = ({ count }) => doc => count
 // ---------------------------------------------------------------------------
 
 function * totalByRegion (params) {
-  const _db = yield MongoClient.connect(DB_URL)
-
   const buildMatch = R.compose(
     addAttackerCount({ count: 1 }),
     addRange(params),
@@ -60,11 +57,9 @@ function * totalByRegion (params) {
     }
   ]
 
-  const documents = yield _db.collection('killmails').aggregate(query).toArray()
+  const db = yield connection
 
-  _db.close()
-
-  return documents
+  return db.collection('killmails').aggregate(query).toArray()
 }
 
 // export

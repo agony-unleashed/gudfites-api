@@ -16,9 +16,9 @@ const DB_URL = process.env.KBDUMP_LOCAL
   ? 'mongodb://localhost:27017/zkill'
   : 'mongodb://database:27017/zkill'
 
-const connect = util.promisify(MongoClient.connect)
-const parseCsv = doc => doc.then(_doc => util.promisify(csv.parse)(_doc))
+const connection = MongoClient.connect(DB_URL)
 const loadCsv = path => util.promisify(fs.readFile)(path)
+const parseCsv = doc => doc.then(_doc => util.promisify(csv.parse)(_doc))
 
 // ---------------------------------------------------------------------------
 
@@ -89,11 +89,11 @@ const isCapsule = ({ victim }) => /capsule/i.test(victim.shipType.name)
 
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+
 const insertDocs = (db, documents) => {
   return new Promise(function (resolve, reject) {
     db.collection('killmails').insertMany(documents, function (err, _result) {
-      db.close()
-
       if (err) {
         reject(err)
       } else {
@@ -107,8 +107,8 @@ const insertDocs = (db, documents) => {
   })
 }
 
-const insertKillmail = connect => killmail => {
-  return connect(DB_URL).then(db => insertDocs(db, [killmail]))
+const insertKillmail = connection => killmail => {
+  return connection.then(db => insertDocs(db, [killmail]))
 }
 
 const getMail = get => () => {
@@ -189,7 +189,7 @@ function run () {
     .then(bail)
     .then(addRegionId(systemsDict))
     .then(addHours)
-    .then(insertKillmail(connect))
+    .then(insertKillmail(connection))
     .then(run) // run loop
     .catch(function (err) {
       console.error(err.message)
