@@ -60,6 +60,7 @@ services:
       - "8080"
     depends_on:
       - pw
+      - db
 
   consumer:
     restart: unless-stopped
@@ -67,6 +68,8 @@ services:
     build: ./apps/consumer
     links:
       - db:database
+    depends_on:
+      - db
 
   db:
     image: 'bitnami/mongodb:latest'
