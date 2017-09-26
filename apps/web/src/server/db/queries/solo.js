@@ -4,7 +4,7 @@ const moment = require('moment')
 
 // ---------------------------------------------------------------------------
 
-const connection = require('../connection.js')
+const db = require('../db.js')
 
 // ---------------------------------------------------------------------------
 
@@ -57,9 +57,7 @@ function * totalByRegion (params) {
     }
   ]
 
-  const db = yield connection
-
-  return db.collection('killmails').aggregate(query).toArray()
+  return db.killmails.aggregate(query).toArray()
 }
 
 // export
