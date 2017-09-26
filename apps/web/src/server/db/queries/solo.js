@@ -57,7 +57,7 @@ function * totalByRegion (params) {
     }
   ]
 
-  return db.killmails.aggregate(query).toArray()
+  return db.killmails.aggregate(query)
 }
 
 // export

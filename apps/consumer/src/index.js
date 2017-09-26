@@ -14,7 +14,7 @@ const util = require('util')
 
 const DB_URL = process.env.KBDUMP_LOCAL
   ? 'mongodb://localhost:27017/zkill'
-  : 'mongodb://database:27017/zkill'
+  : 'mongodb://db:27017/zkill'
 
 const db = mongoist(DB_URL)
 const loadCsv = path => util.promisify(fs.readFile)(path)

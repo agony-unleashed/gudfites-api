@@ -54,8 +54,6 @@ services:
       - VIRTUAL_HOST=
       - VIRTUAL_NETWORK=proxy
       - VIRTUAL_PORT=8080
-    links:
-      - db:database
     expose:
       - "8080"
     depends_on:
@@ -64,10 +62,8 @@ services:
 
   consumer:
     restart: unless-stopped
-    container_name: gudefites_consumer
+    container_name: gudfites_consumer
     build: ./apps/consumer
-    links:
-      - db:database
     depends_on:
       - db
 
@@ -75,6 +71,10 @@ services:
     image: 'bitnami/mongodb:latest'
     container_name: gudfites_mongo
     restart: unless-stopped
+    environment:
+      - MONGODB_USERNAME=
+      - MONGODB_PASSWORD=
+      - MONGODB_DATABASE=
     labels:
       kompose.service.type: nodeport
     ports:
