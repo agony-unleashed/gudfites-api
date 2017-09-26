@@ -1,12 +1,12 @@
 // imports
 // ---------------------------------------------------------------------------
 
-const MongoClient = require('mongodb').MongoClient
 const R = require('ramda')
 const axios = require('axios')
 const csv = require('csv')
 const fs = require('fs')
 const moment = require('moment')
+const mongoist = require('mongoist')
 const path = require('path')
 const util = require('util')
 
@@ -16,7 +16,7 @@ const DB_URL = process.env.KBDUMP_LOCAL
   ? 'mongodb://localhost:27017/zkill'
   : 'mongodb://database:27017/zkill'
 
-const connection = MongoClient.connect(DB_URL)
+const db = mongoist(DB_URL)
 const loadCsv = path => util.promisify(fs.readFile)(path)
 const parseCsv = doc => doc.then(_doc => util.promisify(csv.parse)(_doc))
 
@@ -91,24 +91,12 @@ const isCapsule = ({ victim }) => /capsule/i.test(victim.shipType.name)
 
 // ---------------------------------------------------------------------------
 
-const insertDocs = (db, documents) => {
-  return new Promise(function (resolve, reject) {
-    db.collection('killmails').insertMany(documents, function (err, _result) {
-      if (err) {
-        reject(err)
-      } else {
-        const { result, insertedIds } = _result
+const insertKillmail = db => async (killmail) => {
+  const result = await db.killmails.insert(killmail)
 
-        console.log(`inserted ids: ${insertedIds}`)
+  console.log(`inserted killmail: ${result.killID}`)
 
-        resolve(result)
-      }
-    })
-  })
-}
-
-const insertKillmail = connection => killmail => {
-  return connection.then(db => insertDocs(db, [killmail]))
+  return 'success!'
 }
 
 const getMail = get => () => {
@@ -189,8 +177,10 @@ function run () {
     .then(bail)
     .then(addRegionId(systemsDict))
     .then(addHours)
-    .then(insertKillmail(connection))
-    .then(run) // run loop
+    .then(insertKillmail(db))
+    .then(() => {
+      setTimeout(run, 100) // loop
+    }) // run loop
     .catch(function (err) {
       console.error(err.message)
 
