@@ -195,7 +195,6 @@ module.exports = {
 
   Test: {
     getMail,
-    insertDocs,
     insertKillmail
   }
 }
