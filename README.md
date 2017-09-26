@@ -20,8 +20,8 @@ containers with `$ docker-compose down -v`, and then `$ rm -rf volumes/mongo`.
 # TODO:
 
 - [ ] expiry for zkill data
-- [ ] Use a legit cert for jwt signing - will also need to do some Docker env stuff
+- [x] Use a legit cert for jwt signing - will also need to do some Docker env stuff
 - [ ] discord chatbot for quick queries
 - [ ] many more endpoints
-- [ ] uh... can't run compose with `-d`...
+- [x] uh... can't run compose with `-d`...
 - [ ] mongo keeps going into lunatic state
