@@ -28,7 +28,7 @@ const addRange = ({ range: _range }) => doc => {
 }
 
 const addAttackerCount = ({ count }) => doc => count
-  ? Object.assign({}, { 'killmail.attackerCount': count }, doc)
+  ? Object.assign({}, { 'kbdump.attackerCount': count }, doc)
   : doc
 
 // ---------------------------------------------------------------------------

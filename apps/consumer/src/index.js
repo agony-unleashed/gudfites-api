@@ -22,8 +22,9 @@ const parseCsv = doc => doc.then(_doc => util.promisify(csv.parse)(_doc))
 
 // ---------------------------------------------------------------------------
 
-const systems = parseCsv(loadCsv(path.resolve(__dirname, 'fixture/mapSolarSystems.csv')))
-const regions = parseCsv(loadCsv(path.resolve(__dirname, 'fixture/mapRegions.csv')))
+const systems = parseCsv(loadCsv(path.resolve(__dirname, 'static/map-solar-systems.csv')))
+const regions = parseCsv(loadCsv(path.resolve(__dirname, 'static/map-regions.csv')))
+const items = parseCsv(loadCsv(path.resolve(__dirname, 'static/inv-types.csv')))
 
 const systemsDict = systems.then(_systems => {
   return regions.then(_regions => {
@@ -85,14 +86,12 @@ const getZone = hour => {
   return R.isEmpty(zone) ? null : zone
 }
 
-const isCapsule = ({ victim }) => /capsule/i.test(victim.shipType.name)
+const isCapsule = ({ victim }) => victim.ship_type_id === 33328 || victim.ship_type_id === 670
 
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-
-const insertKillmail = db => async (killmail) => {
-  const result = await db.killmails.insert(killmail)
+const insertKillmail = db => async (payload) => {
+  const result = await db.killmails.insert(payload)
 
   console.log(`inserted killmail: ${result.killID}`)
 
@@ -110,28 +109,28 @@ const getMail = get => () => {
     .then(response => response.data.package)
 }
 
-const bail = killmail => {
+const bail = payload => {
   // null response from zkill
-  if (R.isNil(killmail)) {
+  if (R.isNil(payload)) {
     throw new Error('null kill')
   }
 
   // npc kill
-  if (killmail.zkb.npc) {
+  if (payload.zkb.npc) {
     throw new Error('npc kill')
   }
 
   // podkill
-  if (isCapsule(killmail.killmail)) {
+  if (isCapsule(payload.killmail)) {
     throw new Error('pod kill')
   }
 
-  return killmail
+  return payload
 }
 
-const addRegionId = lookup => killmail => {
+const addRegionId = lookup => payload => {
   return lookup.then(systems => {
-    const _systemId = killmail.killmail.solarSystem.id_str
+    const _systemId = payload.killmail.solar_system_id
 
     const addlData = {
       regionId: systems[_systemId].regionId,
@@ -140,14 +139,14 @@ const addRegionId = lookup => killmail => {
 
     return Object.assign(
       {},
-      killmail,
+      payload,
       { kbdump: addlData }
     )
   })
 }
 
-const addHours = killmail => {
-  const date = moment(killmail.killmail.killTime, 'YYYY.MM.DD HH:mm:ss')
+const addHours = payload => {
+  const date = moment(payload.killmail.killmail_time, 'YYYY.MM.DD HH:mm:ss')
 
   const hour = date.format('H')
   const unix = date.unix()
@@ -159,12 +158,28 @@ const addHours = killmail => {
       unixSeconds: unix,
       zone: getZone(hour)
     },
-    killmail.kbdump
+    payload.kbdump
   )
 
   return Object.assign(
     {},
-    killmail,
+    payload,
+    { kbdump: addlData }
+  )
+}
+
+const addAttackerCount = payload => {
+  const addlData = Object.assign(
+    {},
+    {
+      attackerCount: payload.killmail.attackers.length
+    },
+    payload.kbdump
+  )
+
+  return Object.assign(
+    {},
+    payload,
     { kbdump: addlData }
   )
 }
@@ -177,10 +192,9 @@ function run () {
     .then(bail)
     .then(addRegionId(systemsDict))
     .then(addHours)
+    .then(addAttackerCount)
     .then(insertKillmail(db))
-    .then(() => {
-      setTimeout(run, 100) // loop
-    }) // run loop
+    .then(() => { setTimeout(run, 100) }) // run loop
     .catch(function (err) {
       console.error(err.message)
 
